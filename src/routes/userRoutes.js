@@ -1,5 +1,22 @@
+import bcrypt from "bcrypt";
 import express from "express";
+import jwt from "jsonwebtoken";
+import z from "zod";
+import { JWT_SECRET } from "../config/config";
+import { UserModel } from "../models/user.js";
 const userRouter = express.Router();
+
+
+const signupSchema = z.object({
+    username: z.string().trim().min(3, "Username must be at least 3 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(8, "Password must be at least 8 characters").max(30),
+});
+
+const signinSchema = z.object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(1, "Password is required")
+});
 
 userRouter.post("/signup", async (req, res) => {
     // take from user inputs
@@ -10,6 +27,34 @@ userRouter.post("/signup", async (req, res) => {
             // save to db
             // hash the password using bcrypt
             // send the response to the user
+
+    try {
+        const result = signupSchema.safeParse(req.body);
+
+        if (!result.success) {
+            return res.status(400).json({
+                errors: result.error.flatten(),
+            });
+        }
+
+        // Validated data
+        // const data = result.data;
+        const { username, email, password } = result.data;
+        const existingUser = await UserModel.findOne({ email })
+
+        if (existingUser) {
+            return res.status(400).json({ message: "User already exists" })
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10)
+
+        const user = await UserModel.create({ username, email: email.toLowerCase(), password: hashedPassword });
+
+        res.status(201).json({ message: "Signed up successfully", user: { username: user.username, email: user.email } });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Server Error, something went wrong" })
+    }
 });
 
 
@@ -22,6 +67,38 @@ userRouter.post("/signin", async (req, res) => {
     // compare the password the plain one and the hashed one, using bcrypt
     // generate jwt
     // send the response to the user
+
+    try {
+        const result = signinSchema.safeParse(req.body);
+
+        if (!result.success) {
+            return res.status(400).json({
+                errors: result.error.flatten(),
+            });
+        }
+
+        const { email, password } = result.data;
+        const existingUser = await UserModel.findOne({ email: email.toLowerCase() })
+
+        if (!existingUser) {
+            return res.status(401).json({ message: "Invalid email or password" })
+        }
+
+        const isMatched = await bcrypt.compare(password, existingUser.password)
+
+        if (!isMatched) {
+            return res.status(400).json({
+                message: "Invalid email or password"
+            });
+        }
+
+        const token = jwt.sign({ id: existingUser._id }, JWT_SECRET);
+
+        res.status(200).json({ message: "User successfully signed in", token: token });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({message: "Server Error, something went wrong"});
+    }
 });
 
-export {userRouter}
+export { userRouter };
