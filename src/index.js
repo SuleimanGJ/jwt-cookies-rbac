@@ -4,6 +4,7 @@ import { connectDB } from "./config/db.js";
 import { PORT } from "./config/config.js";
 const app = express();
 
+app.use(express.json());
 app.use("/users", userRouter)
 
 connectDB().then(()=> {

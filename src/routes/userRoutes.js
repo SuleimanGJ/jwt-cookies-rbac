@@ -2,7 +2,7 @@ import bcrypt from "bcrypt";
 import express from "express";
 import jwt from "jsonwebtoken";
 import z from "zod";
-import { JWT_SECRET } from "../config/config";
+import { JWT_SECRET } from "../config/config.js";
 import { UserModel } from "../models/user.js";
 const userRouter = express.Router();
 
@@ -29,8 +29,9 @@ userRouter.post("/signup", async (req, res) => {
             // send the response to the user
 
     try {
+        console.log(req.body)
         const result = signupSchema.safeParse(req.body);
-
+        console.log(result)
         if (!result.success) {
             return res.status(400).json({
                 errors: result.error.flatten(),
@@ -41,7 +42,6 @@ userRouter.post("/signup", async (req, res) => {
         // const data = result.data;
         const { username, email, password } = result.data;
         const existingUser = await UserModel.findOne({ email })
-
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" })
         }
