@@ -95,8 +95,18 @@ userRouter.post("/signin", async (req, res) => {
         }
 
         const accessToken = generateAccessToken(existingUser._id);
+        const refreshToken = generateRefreshToken(existingUser._id);
 
-        res.status(200).json({ message: "User successfully signed in", accessToken: accessToken });
+        res
+            .status(200)
+            .cookie("refreshToken", refreshToken, {
+                httpOnly: true,
+                secure: false, // true when using HTTPS
+            })
+            .json({
+                message: "User successfully signed in",
+                accessToken
+            });
     } catch (error) {
         console.error(error);
         return res.status(500).json({message: "Server Error, something went wrong"});

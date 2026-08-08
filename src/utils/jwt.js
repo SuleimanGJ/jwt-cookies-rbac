@@ -4,3 +4,6 @@ import jwt from "jsonwebtoken";
 export const generateAccessToken = (userId) => {
     return jwt.sign({ id: userId }, JWT_SECRET)
 }
+export const generateRefreshToken = (userId) => {
+    return jwt.sign({ id: userId }, JWT_SECRET)
+}
