@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken";
 import z from "zod";
 import { UserModel } from "../models/user.js";
 import { verifyToken } from "../middleware/verifyToken.js";
-import { generateAccessToken } from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import { REFRESH_TOKEN_SECRET } from "../config/config.js";
 const userRouter = express.Router();
 
 
@@ -118,5 +119,38 @@ userRouter.get("/me", async (req, res) => {
 userRouter.get("/profile", verifyToken, async (req, res) => {
     res.json({ message: "Profile"})
 })
+
+
+userRouter.post("/refresh", (req, res) => {
+
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(401).json({
+            message: "Refresh token not found"
+        });
+    }
+
+    try {
+
+        const decoded = jwt.verify(
+            refreshToken,
+            REFRESH_TOKEN_SECRET
+        );
+
+        const accessToken = generateAccessToken(decoded.id);
+
+        return res.status(200).json({
+            accessToken
+        });
+
+    } catch (error) {
+
+        return res.status(403).json({
+            message: "Invalid or expired refresh token"
+        });
+
+    }
+});
 
 export { userRouter };
