@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken";
 import z from "zod";
 import { JWT_SECRET } from "../config/config.js";
 import { UserModel } from "../models/user.js";
+import { verifyToken } from "../middleware/verifyToken.js";
+import { generateAccessToken } from "../utils/jwt.js";
 const userRouter = express.Router();
 
 
@@ -92,13 +94,20 @@ userRouter.post("/signin", async (req, res) => {
             });
         }
 
-        const token = jwt.sign({ id: existingUser._id }, JWT_SECRET);
+        const accessToken = generateAccessToken(existingUser._id);
 
-        res.status(200).json({ message: "User successfully signed in", token: token });
+        res.status(200).json({ message: "User successfully signed in", accessToken: accessToken });
     } catch (error) {
         console.error(error);
         return res.status(500).json({message: "Server Error, something went wrong"});
     }
 });
+
+userRouter.get("/me", async (req, res) => {
+    res.json({message: "me"})
+})
+userRouter.get("/profile", verifyToken, async (req, res) => {
+    res.json({ message: "Profile"})
+})
 
 export { userRouter };
