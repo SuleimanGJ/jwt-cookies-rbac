@@ -2,7 +2,6 @@ import bcrypt from "bcrypt";
 import express from "express";
 import jwt from "jsonwebtoken";
 import z from "zod";
-import { JWT_SECRET } from "../config/config.js";
 import { UserModel } from "../models/user.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { generateAccessToken } from "../utils/jwt.js";
