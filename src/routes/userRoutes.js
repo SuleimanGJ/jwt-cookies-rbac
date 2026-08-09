@@ -97,6 +97,12 @@ userRouter.post("/signin", async (req, res) => {
         const accessToken = generateAccessToken(existingUser._id);
         const refreshToken = generateRefreshToken(existingUser._id);
 
+        // only 7 days valid
+        const expiresAt = new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+        );
+        await RefreshTokenModel.create({ userId: existingUser._id, token: refreshToken, expiresAt})
+
         res
             .status(200)
             .cookie("refreshToken", refreshToken, {
@@ -132,6 +138,22 @@ userRouter.post("/refresh", (req, res) => {
     }
 
     try {
+
+        const storedToken = await RefreshTokenModel.findOne({
+            token: refreshToken
+        });
+
+        if (!storedToken) {
+            return res.status(403).json({
+                message: "Invalid refresh token"
+            });
+        }
+
+        if (storedToken.expiresAt < new Date()) {
+            return res.status(403).json({
+                message: "Refresh token expired"
+            });
+        }
 
         const decoded = jwt.verify(
             refreshToken,
