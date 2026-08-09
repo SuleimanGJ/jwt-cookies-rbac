@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { ACCESS_TOKEN_SECRETT } from "../config/config.js";
+import { ACCESS_TOKEN_SECRET } from "../config/config.js";
 
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -8,7 +8,7 @@ const verifyToken = (req, res, next) => {
             return res.status(401).json({message: "Unauthorized"})
         }
         const token = authHeader.split(' ')[1];
-        const decoded = jwt.verify(token, ACCESS_TOKEN_SECRETT);
+        const decoded = jwt.verify(token, ACCESS_TOKEN_SECRET);
         req.user = decoded;
         next();
     } catch (error) {
