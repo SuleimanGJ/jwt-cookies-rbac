@@ -160,8 +160,32 @@ userRouter.post("/refresh", (req, res) => {
             REFRESH_TOKEN_SECRET
         );
 
-        const accessToken = generateAccessToken(decoded.id);
+        // Refresh Token Rotation starts here
+        // Delete old refresh token
+        await RefreshTokenModel.deleteOne({
+            _id: storedToken._id
+        });
 
+        // generate new tokens
+        const accessToken = generateAccessToken(decoded.id);
+        
+        const newRefreshToken = generateRefreshToken(decoded.id);
+
+        // Calculate expiration - only 7 days valid
+        const expiresAt = new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+        );
+
+        // Store new refresh token in mongodb
+        await RefreshTokenModel.create({ userId: decoded.id, token: newRefreshToken, expiresAt });
+
+        // Replace cookie with old refresh to new refresh
+        res.cookie("refreshToken", newRefreshToken, {
+            httpOnly: true,
+            secure: false
+        });
+
+        // Return new access toke
         return res.status(200).json({
             accessToken
         });
