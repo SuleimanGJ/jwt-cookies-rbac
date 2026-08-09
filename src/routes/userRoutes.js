@@ -3,6 +3,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import z from "zod";
 import { UserModel } from "../models/user.js";
+import { RefreshTokenModel } from "../models/refreshToken.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
 import { REFRESH_TOKEN_SECRET } from "../config/config.js";
@@ -213,6 +214,36 @@ userRouter.post("/logout", async (req, res) => {
 
         return res.status(200).json({
             message: "Logged out successfully"
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            message: "Server error"
+        });
+
+    }
+});
+
+// Revoke all refresh-token sessions for this user
+userRouter.post("/logout-all", async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    try {
+        if (refreshToken) {
+            const decoded = jwt.verify(
+                refreshToken,
+                REFRESH_TOKEN_SECRET
+            );
+            await RefreshTokenModel.deleteMany({
+                userId: decoded.id
+            });
+        }
+        
+        res.clearCookie("refreshToken");
+
+        return res.status(200).json({
+            message: "Logged out all devices successfully"
         });
 
     } catch (error) {
