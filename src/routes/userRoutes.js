@@ -202,18 +202,12 @@ userRouter.post("/refresh", async (req, res) => {
 userRouter.post("/logout", async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
 
-    if (!refreshToken) {
-        res.clearCookie("refreshToken");
-        return res.status(401).json({
-            message: "Refresh token not found"
-        });
-    }
-
     try {
-
-        await RefreshTokenModel.deleteOne({
-            token: refreshToken
-        });
+        if (refreshToken) {
+            await RefreshTokenModel.deleteOne({
+                token: refreshToken
+            });
+        }
 
         res.clearCookie("refreshToken");
 
