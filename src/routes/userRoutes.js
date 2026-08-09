@@ -127,7 +127,7 @@ userRouter.get("/profile", verifyToken, async (req, res) => {
 })
 
 
-userRouter.post("/refresh", (req, res) => {
+userRouter.post("/refresh", async (req, res) => {
 
     const refreshToken = req.cookies.refreshToken;
 
@@ -194,6 +194,37 @@ userRouter.post("/refresh", (req, res) => {
 
         return res.status(403).json({
             message: "Invalid or expired refresh token"
+        });
+
+    }
+});
+
+userRouter.post("/logout", async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        res.clearCookie("refreshToken");
+        return res.status(401).json({
+            message: "Refresh token not found"
+        });
+    }
+
+    try {
+
+        await RefreshTokenModel.deleteOne({
+            token: refreshToken
+        });
+
+        res.clearCookie("refreshToken");
+
+        return res.status(200).json({
+            message: "Logged out successfully"
+        });
+
+    } catch (error) {
+
+        return res.status(500).json({
+            message: "Server error"
         });
 
     }
